@@ -1,0 +1,33 @@
+{
+  "name": "sat-ts",
+  "version": "1.0.0",
+  "author": "David González Martínez",
+  "description": "Simple SAT solver in TypeScript that implements the DPLL algorithm, powered by Bun runtime.",
+  "type": "module",
+  "scripts": {
+    "test": "bun test",
+    "sat-ts": "bun run src/main.ts",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write src/**/*.ts"
+  },
+  "keywords": [
+    "sat",
+    "dpll",
+    "typescript",
+    "boolean",
+    "logic",
+    "ai"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.1.0"
+  },
+  "devDependencies": {
+    "bun-types": "^1.0.11",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.0.1"
+  }
+}
