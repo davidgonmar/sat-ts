@@ -6,6 +6,12 @@ A DPLL-based SAT solver written in TypeScript, powered by Bun.
 
 ## Usage
 
+### Requirements
+
+You need to have Bun installed on your system. You can find more information at https://bun.sh/.
+
+### Running the solver
+
 First, clone the repository and install dependencies:
 
 ```bash
@@ -20,6 +26,8 @@ Then, you can run the solver with:
 bun sat-ts <path-to-cnf-file>
 ```
 
+The program accepts CNF files in the DIMACS format.
+
 ### Example
 
 ```bash
@@ -31,8 +39,6 @@ Parsed in: 0.123 seconds
 Solved in: 0.456 seconds
 Total time: 0.579 seconds
 ```
-
-## Development
 
 ### Testing
 
@@ -52,8 +58,6 @@ The project uses ESLint for linting. It can be run with:
 bun lint
 bun format
 ```
-
-The program accepts CNF files in the DIMACS format.
 
 ## License
 
