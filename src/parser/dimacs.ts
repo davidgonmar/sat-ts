@@ -107,7 +107,10 @@ export class DimacsParser {
       })
       .filter((n) => n); // filter out 0
     const clause = new Clause(numberLiterals);
-    for (const literal of clause.literals) {
+    if (typeof clause.value === 'boolean') {
+      throw new Error('This should not happen');
+    }
+    for (const literal of clause.value) {
       this.variables.add(Math.abs(literal as number));
     }
 

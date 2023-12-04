@@ -2,72 +2,81 @@ import { expect, test, describe } from 'bun:test';
 import { Clause } from '@/common/clause';
 
 describe('Clause', () => {
-  test('clone', () => {
-    const clause = new Clause([1, 2, 3]);
-    const copy = clause.clone();
-    copy.assignLiteral(1, true);
-    expect(clause.literals).toEqual([1, 2, 3]);
-    expect(copy.literals).toEqual([true, 2, 3]);
+  describe('constructor', () => {
+    test('creates a clause from true value', () => {
+      const clause = new Clause(true);
+      expect(clause.value).toEqual(true);
+    });
+    test('creates a clause from false value', () => {
+      const clause = new Clause(false);
+      expect(clause.value).toEqual(false);
+    });
+    test('creates a clause from an array of literals', () => {
+      const clause = new Clause([1, 2, 3]);
+      expect(clause.value).toEqual([1, 2, 3]);
+    });
+    test('creates a clause from an array with mixed literals and booleans', () => {
+      const clause = new Clause([1, false, 3]);
+      expect(clause.value).toEqual([1, false, 3]);
+    });
   });
 
-  test('containsLiteral', () => {
-    const clause = new Clause([1, 2, 3]);
-    expect(clause.containsLiteral(1)).toBe(true);
-    expect(clause.containsLiteral(2)).toBe(true);
-    expect(clause.containsLiteral(3)).toBe(true);
-    expect(clause.containsLiteral(4)).toBe(false);
-    expect(clause.containsLiteral(-1)).toBe(false);
+  describe('assignLiteral', () => {
+    test('value turns true when a literal is assigned true', () => {
+      const clause = new Clause([1, 2, 3]);
+      clause.assignLiteral(1, true);
+      expect(clause.value).toEqual(true);
+    });
+    test('value turns true when a literal whose negation appears is assigned false', () => {
+      const clause = new Clause([1, 2, 3]);
+      clause.assignLiteral(-1, false);
+      expect(clause.value).toEqual(true);
+    });
+    test('value turns false when all literals are assigned false', () => {
+      const clause = new Clause([1, 2, 3]);
+      clause.assignLiteral(1, false);
+      clause.assignLiteral(2, false);
+      clause.assignLiteral(3, false);
+      expect(clause.value).toEqual(false);
+    });
+    test('value stays as array if not all literals are false', () => {
+      const clause = new Clause([1, 2, 3]);
+      clause.assignLiteral(1, false);
+      clause.assignLiteral(2, false);
+      expect(clause.value).toEqual([false, false, 3]);
+    });
   });
 
-  test('assignLiteral', () => {
-    const clause = new Clause([1, 2, 3]);
-    clause.assignLiteral(1, true);
-    expect(clause.literals).toEqual([true, 2, 3]);
+  describe('unitLiteral', () => {
+    test('returns null if the clause is decided', () => {
+      const clause = new Clause(true);
+      expect(clause.unitLiteral).toEqual(null);
+    });
+    test('returns null if the clause has more than one non-assigned literal', () => {
+      const clause = new Clause([1, 2, 3]);
+      expect(clause.unitLiteral).toEqual(null);
+    });
+    test('returns the literal if the clause has only one non-assigned literal', () => {
+      const clause = new Clause([1, 2, 3]);
+      clause.assignLiteral(1, false);
+      clause.assignLiteral(2, false);
+      expect(clause.unitLiteral).toEqual(3);
+    });
   });
 
-  test('unitLiteral', () => {
-    const clause = new Clause([1, 2, 3]);
-    expect(clause.unitLiteral).toBe(null);
-    clause.assignLiteral(1, true);
-    expect(clause.unitLiteral).toBe(null);
-    clause.assignLiteral(2, false);
-    expect(clause.unitLiteral).toBe(null);
-    clause.assignLiteral(3, true);
-    expect(clause.unitLiteral).toBe(null);
-    expect(new Clause([1]).unitLiteral).toBe(1);
-    expect(clause.isSatisfied).toBe(true);
-  });
-
-  test('isSatisfied', () => {
-    const clause = new Clause([1, 2, 3]);
-    expect(clause.isSatisfied).toBe(false);
-    clause.assignLiteral(1, true);
-    expect(clause.isSatisfied).toBe(true);
-    clause.assignLiteral(2, false);
-    expect(clause.isSatisfied).toBe(true);
-    clause.assignLiteral(3, true);
-    expect(clause.isSatisfied).toBe(true);
-  });
-
-  test('isUnsatisfiable', () => {
-    const clause = new Clause([1, 2, 3]);
-    expect(clause.isUnsatisfiable).toBe(false);
-    clause.assignLiteral(1, false);
-    expect(clause.isUnsatisfiable).toBe(false);
-    clause.assignLiteral(2, false);
-    expect(clause.isUnsatisfiable).toBe(false);
-    clause.assignLiteral(3, false);
-    expect(clause.isUnsatisfiable).toBe(true);
-  });
-
-  test('unassignedLiterals', () => {
-    const clause = new Clause([1, 2, 3]);
-    expect(clause.unassignedLiterals).toEqual([1, 2, 3]);
-    clause.assignLiteral(1, true);
-    expect(clause.unassignedLiterals).toEqual([2, 3]);
-    clause.assignLiteral(2, false);
-    expect(clause.unassignedLiterals).toEqual([3]);
-    clause.assignLiteral(3, true);
-    expect(clause.unassignedLiterals).toEqual([]);
+  describe('clone', () => {
+    test('returns a deep copy of the clause', () => {
+      const clause = new Clause([1, 2, 3]);
+      const clone = clause.clone();
+      expect(clause).toEqual(clone);
+      expect(clause).not.toBe(clone);
+    });
+    test('if value is an array, it is independent from the original', () => {
+      const clause = new Clause([1, 2, 3]);
+      const clone = clause.clone();
+      clause.assignLiteral(1, false);
+      expect(clause.value).toEqual([false, 2, 3]);
+      expect(clone.value).toEqual([1, 2, 3]);
+    });
   });
 });

@@ -1,5 +1,5 @@
 import { Clause } from '@/common/clause';
-import { Literal } from '@/common/literal';
+import { Literal, LiteralOrAssignedLiteral } from '@/common/literal';
 
 export enum ResultType {
   SAT = 'SAT',
@@ -29,15 +29,9 @@ export class Solver {
    *
    */
   private assign(literal: Literal, value: boolean) {
-    const newClauses: Clause[] = [];
     for (const clause of this.clauses) {
       clause.assignLiteral(literal, value);
-      if (clause.isSatisfied) {
-        continue;
-      }
-      newClauses.push(clause.clone());
     }
-    this.clauses = newClauses;
   }
 
   /**
@@ -63,13 +57,20 @@ export class Solver {
   private pickLiteral() {
     const mostUsed: Map<Literal, number> = new Map();
     // We need to find a literal that is not assigned from a clause that is not satisfied
-    for (const clause of this.clauses.filter(
-      (clause) => !clause.isSatisfied && !clause.isUnsatisfiable,
-    )) {
-      for (const literal of clause.unassignedLiterals) {
-        const count = mostUsed.get(literal) || 0;
-        mostUsed.set(literal, count + 1);
+    for (const clause of this.clauses) {
+      if (typeof clause.value === 'boolean') {
+        continue;
       }
+      for (const literal of clause.value as LiteralOrAssignedLiteral[]) {
+        if (typeof literal === 'boolean') {
+          continue;
+        }
+        const newCount = (mostUsed.get(literal) ?? 0) + 1;
+        mostUsed.set(literal, newCount);
+      }
+    }
+    if (mostUsed.size === 0) {
+      throw new Error('Unexpected empty mostUsed');
     }
     return [...mostUsed.entries()].sort((a, b) => b[1] - a[1])[0][0];
   }
@@ -103,47 +104,39 @@ export class Solver {
    * True if all clauses are satisfied.
    */
   private get isSatisfiable() {
-    return this.clauses.every((clause) => clause.isSatisfied);
+    return this.clauses.every((clause) => clause.value === true);
   }
 
   /**
    * True if at least one clause is unsatisfied.
    */
   private get isUnsatisfiable() {
-    return this.clauses.some((clause) => clause.isUnsatisfiable);
+    return this.clauses.some((clause) => clause.value === false);
   }
 
-  /**
-   * Performs one step of the DPLL algorithm.
-   */
   private step(): ResultType {
-    // Base cases
-    if (this.isSatisfiable) {
-      return ResultType.SAT;
-    }
-    if (this.isUnsatisfiable) {
-      return ResultType.UNSAT;
-    }
+    while (true) {
+      if (this.isSatisfiable) {
+        return ResultType.SAT;
+      }
+      if (this.isUnsatisfiable) {
+        return ResultType.UNSAT;
+      }
 
-    // If we propagated, we need to check again if we are done
-    if (this.unitPropagation()) {
-      return this.step();
-    }
+      if (this.unitPropagation()) {
+        continue;
+      }
 
-    // If we are not done, we need to branch
-    const firstLiteral = this.pickLiteral();
+      const firstLiteral = this.pickLiteral();
+      this.branch(firstLiteral, true);
 
-    this.branch(firstLiteral, true);
-
-    const isSat = this.step();
-
-    // If the first branch was satisfiable, we are done, but if not, try the other branch
-    if (isSat === ResultType.SAT) {
-      return ResultType.SAT;
-    } else {
-      this.backTrack();
-      this.branch(-firstLiteral, false);
-      return this.step();
+      const isSat = this.step();
+      if (isSat === ResultType.SAT) {
+        return ResultType.SAT;
+      } else {
+        this.backTrack();
+        this.branch(-firstLiteral, false);
+      }
     }
   }
 

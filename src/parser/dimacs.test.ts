@@ -3,60 +3,41 @@ import { DimacsParser } from './dimacs';
 import { Clause } from '@/common/clause';
 
 describe('DimacsParser', () => {
-  const input1 = `
-    c This is a comment
+  const validCases: Array<[string, Array<Clause>]> = [
+    [
+      `c This is a comment
+    c This is another comment
+    p cnf 3 2
+    1 2 3 0
+    -1 -2 -3 0`,
+      [new Clause([1, 2, 3]), new Clause([-1, -2, -3])],
+    ],
+    [
+      `c This is a comment
     c This is another comment
     p cnf 3 2
     1 2 3 0
     -1 -2 -3 0
-  `;
-  const input2 = `
-    c This is a comment
-    c This is another comment
-    p cnf 3 2
+    c This is another comment`,
+      [new Clause([1, 2, 3]), new Clause([-1, -2, -3])],
+    ],
+    [
+      `p cnf 3 2
     1 2 3 0
-    -1 -2 -3 0
-    c This is another comment
-    `;
-  const input3 = `
-    p cnf 3 2
-    1 2 3 0
-    -1 -2 -3 0
-  `;
-  const input4 = `
-   invalid input
-  `;
+    -1 -2 -3 0`,
+      [new Clause([1, 2, 3]), new Clause([-1, -2, -3])],
+    ],
+  ];
 
-  test('parse input1', () => {
-    const parser = new DimacsParser(input1);
+  test.each(validCases)('parse valid input', (input, expectedClauses) => {
+    const parser = new DimacsParser(input);
     const result = parser.parse();
-    expect(result.clauses).toEqual([
-      new Clause([1, 2, 3]),
-      new Clause([-1, -2, -3]),
-    ]);
+    expect(result.clauses).toEqual(expectedClauses);
   });
 
-  test('parse input2', () => {
-    const parser = new DimacsParser(input2);
-    const result = parser.parse();
-    expect(result.clauses).toEqual([
-      new Clause([1, 2, 3]),
-      new Clause([-1, -2, -3]),
-    ]);
-  });
-
-  test('parse input3', () => {
-    const parser = new DimacsParser(input3);
-    const result = parser.parse();
-    expect(result.clauses).toEqual([
-      new Clause([1, 2, 3]),
-      new Clause([-1, -2, -3]),
-    ]);
-  });
-
-  test('parse input4', () => {
+  test('throws on invalid input', () => {
     expect(() => {
-      const parser = new DimacsParser(input4);
+      const parser = new DimacsParser(`invalid input`);
       parser.parse();
     }).toThrow();
   });
